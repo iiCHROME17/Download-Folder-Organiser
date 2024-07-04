@@ -47,6 +47,9 @@ directories = {
 
 # Path to default Downloads folder
 default_downloads = 'D:/Downloads/All Downloads'
+# Path to archive folder
+archive_folder = 'D:/Downloads/All Downloads/Archived'
+extracted_folder = 'D:/Downloads/All Downloads/Extracted'
 
 # Function to organise files automatically
 def organise_files(source_dir):
@@ -55,7 +58,11 @@ def organise_files(source_dir):
         OriginalFilePath = os.path.join(source_dir, file) # The unchanged path of the file
         item_path = os.path.join(source_dir, file)  # Get the full path of the file
 
-        if os.path.isfile(item_path):  # Check if the item is a file
+        #if the file has not finished downloading, skip it
+        if file.endswith('.crdownload'):
+            continue
+
+        elif os.path.isfile(item_path):  # Check if the item is a file
             file_extension = pathlib.Path(item_path).suffix.lower().strip('.')  # Get the file extension of the file
             destination_dir = directories.get(file_extension, None)  # Get the destination directory for the file extension
 
@@ -68,12 +75,34 @@ def organise_files(source_dir):
                     print(f"Error moving {file}: {e}")  # Print error message if file can't be moved
     print("Organising files complete!")
 
+def organiseExtractedFolders(source_dir):
+    print("Organising archived files...")
+    #If a folder exists within the archive folder, move the files to the extracted folder
+    for folder in os.listdir(source_dir):  # Iterate through all files in the source directory
+        OriginalFilePath = os.path.join(source_dir, folder) # The unchanged path of the folder
+        item_path = os.path.join(source_dir, folder)  # Get the full path of the folder
+
+        if os.path.isdir(item_path):  # Check if the item is a directory
+            destination_dir = extracted_folder  # Get the destination directory for the file extension
+            os.makedirs(destination_dir, exist_ok=True)  # Create the destination directory if it doesn't exist
+            try:
+                shutil.move(item_path, destination_dir)  # Move the file to the destination directory
+                print(f"Moved {folder} from {OriginalFilePath} to {destination_dir}")
+            except shutil.Error as e:
+                print(f"Error moving {folder}: {e}")
+    print("Organising archived files complete!")
+
+
+
+
+
 
     #We need to track the changes made
 # Main function
 def main():
     while True:
         organise_files(default_downloads)  # Organise files in the default Downloads folder
+        organiseExtractedFolders(archive_folder) #Organise the extracted folders
         time.sleep(120)  # Wait for 2 minutes before organising files again
 
 if __name__ == '__main__':
